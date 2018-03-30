@@ -1,0 +1,8 @@
+Broker1 -> Bank1 NDAQ 14@68.66
+Broker4 -> Bank1 NDAQ 2@68.66
+Broker4 -> Bank1 NDAQ 8@68.66
+Broker2 -> Bank1 NDAQ 7@68.69
+Broker2 -> Bank2 NDAQ 10@65.02
+Broker2 -> Bank2 NDAQ 4@67.74
+Broker2 -> Bank2 NDAQ 3@68.69
+Broker3 -> Bank2 NDAQ 1@68.69
