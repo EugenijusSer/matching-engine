@@ -69,43 +69,34 @@ class MyEngine implements MatchingEngine {
                 buyOrder = bestMatchingOrder;
             }
 
-            if (buyOrder.getQuantity().compareTo(sellOrder.getQuantity()) < 0) {
-                trades.add(new Trade(sellOrder, buyOrder, buyOrder.getQuantity(), bestMatchingOrder.getPrice()));
-                subtractFromOrderBook(bestMatchingOrder, buyOrder.getQuantity(), orderBook);
-                orderNew = subtractOrder(orderNew, buyOrder.getQuantity());
+            BigDecimal sellQuantity = sellOrder.getQuantity();
+            BigDecimal buyQuantity = buyOrder.getQuantity();
+
+            if (buyQuantity.compareTo(sellQuantity) < 0) {
+                trades.add(new Trade(sellOrder, buyOrder, buyQuantity, bestMatchingOrder.getPrice()));
+                decreaseInOrderBook(bestMatchingOrder, buyQuantity, orderBook);
+                orderNew.decrease(buyQuantity);
             }
-            else if (buyOrder.getQuantity().compareTo(sellOrder.getQuantity()) == 0) {
-                trades.add(new Trade(sellOrder, buyOrder, buyOrder.getQuantity(), bestMatchingOrder.getPrice()));
+            else if (buyQuantity.compareTo(sellQuantity) == 0) {
+                trades.add(new Trade(sellOrder, buyOrder, buyQuantity, bestMatchingOrder.getPrice()));
                 orderBook.remove(bestMatchingOrder);
-                orderNew = subtractOrder(orderNew, buyOrder.getQuantity());
+                orderNew.decrease(buyQuantity);
             }
-            else if (buyOrder.getQuantity().compareTo(sellOrder.getQuantity()) > 0) {
-                trades.add(new Trade(sellOrder, buyOrder, sellOrder.getQuantity(), bestMatchingOrder.getPrice()));
-                subtractFromOrderBook(bestMatchingOrder, sellOrder.getQuantity(), orderBook);
-                orderNew = subtractOrder(orderNew, sellOrder.getQuantity());
+            else if (buyQuantity.compareTo(sellQuantity) > 0) {
+                trades.add(new Trade(sellOrder, buyOrder, sellQuantity, bestMatchingOrder.getPrice()));
+                decreaseInOrderBook(bestMatchingOrder, sellQuantity, orderBook);
+                orderNew.decrease(sellQuantity);
             }
         }
         return trades;
     }
 
-    private void subtractFromOrderBook(Order order, BigDecimal quantity, List<Order> orderBook){
+    //method to decrease quantity of opposite order in order book
+    private void decreaseInOrderBook(Order order, BigDecimal quantity, List<Order> orderBook){
+        //order is referenced to best matching order, which was filtered out of list, so this works
+        order.decrease(quantity);
 
-        int index = orderBook.indexOf(order);
-        Order orderNew = subtractOrder(order,quantity);
-
-        if(orderNew.getQuantity().compareTo(BigDecimal.ZERO) == 0)
-            orderBook.remove(index);
-        else
-            orderBook.set(index, orderNew);
-    }
-
-    private Order subtractOrder(Order order, BigDecimal quantity){
-        return new Order(order.getTimeStamp() + " " +
-                order.getId() + " " +
-                order.getClient() + " " +
-                order.getSide() + " " +
-                order.getStock() + " " +
-                order.getQuantity().subtract(quantity) + "@" +
-                order.getPrice());
+        if(order.getQuantity().compareTo(BigDecimal.ZERO) == 0)
+            orderBook.remove(order);
     }
 }
