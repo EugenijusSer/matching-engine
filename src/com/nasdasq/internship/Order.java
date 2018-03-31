@@ -80,9 +80,6 @@ public class Order {
         return quantity;
     }
 
-    //mano
-    void setQuantity(BigDecimal quantity) {this.quantity = quantity;}
-
     BigDecimal getPrice() {
         return price;
     }

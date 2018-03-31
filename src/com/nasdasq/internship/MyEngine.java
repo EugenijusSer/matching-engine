@@ -2,7 +2,6 @@ package com.nasdasq.internship;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 class MyEngine implements MatchingEngine {
     private List<Order> sellOrders = new ArrayList<>();
@@ -14,56 +13,31 @@ class MyEngine implements MatchingEngine {
     public List<Trade> enterOrder(Order orderNew){
         List<Trade> trades = new ArrayList<>();
         //Place your implementation here
-
-        if(orderNew.getSide() == Side.SELL)
-            trades = makeTrades(trades,orderNew,buyOrders);
-        else
-            trades = makeTrades(trades,orderNew,sellOrders);
-
-        return trades;
-    }
-
-    private List<Trade> makeTrades(List<Trade> trades, Order orderNew, List<Order> orderBook){
         Order bestMatchingOrder, sellOrder, buyOrder;
-        final String stock = orderNew.getStock();
-        final BigDecimal price = orderNew.getPrice();
+        List<Order> orderBook; //order book of opposite side
 
         while(orderNew.getQuantity().compareTo(BigDecimal.ZERO) > 0) {
 
-            List<Order> matchingOrders;
-
             if(orderNew.getSide() == Side.BUY){
-                //filter sell orders to only ones that match the buy order
-                matchingOrders = orderBook.stream()
-                        .filter(order -> order.getStock().equals(stock)
-                                && price.compareTo(order.getPrice()) >= 0).collect(Collectors.toList());
+                orderBook = sellOrders;
+                bestMatchingOrder = findBestMatchingOrder(orderNew,orderBook);
 
-                if (matchingOrders.isEmpty()) {
+                if(bestMatchingOrder == null){
                     buyOrders.add(orderNew);
                     break;
                 }
-
-                bestMatchingOrder = matchingOrders.stream()
-                        .min(Comparator.comparing(Order::getPrice))
-                        .orElse(null);
 
                 sellOrder = bestMatchingOrder;
                 buyOrder = orderNew;
             }
             else{
-                //filter buy orders to only ones that match the sell order
-                matchingOrders = orderBook.stream()
-                        .filter(order -> order.getStock().equals(stock)
-                                && price.compareTo(order.getPrice()) <= 0).collect(Collectors.toList());
+                orderBook = buyOrders;
+                bestMatchingOrder = findBestMatchingOrder(orderNew, orderBook);
 
-                if (matchingOrders.isEmpty()) {
+                if(bestMatchingOrder == null){
                     sellOrders.add(orderNew);
                     break;
                 }
-
-                bestMatchingOrder = matchingOrders.stream()
-                        .max(Comparator.comparing(Order::getPrice))
-                        .orElse(null);
 
                 sellOrder = orderNew;
                 buyOrder = bestMatchingOrder;
@@ -88,7 +62,26 @@ class MyEngine implements MatchingEngine {
                 orderNew.decrease(sellQuantity);
             }
         }
+
         return trades;
+    }
+
+    private Order findBestMatchingOrder(Order orderNew, List<Order> orderBook){
+        final String stock = orderNew.getStock();
+        final BigDecimal price = orderNew.getPrice();
+
+        if(orderNew.getSide() == Side.BUY)
+            return orderBook.stream()
+                    .filter(order -> order.getStock().equals(stock)
+                            && price.compareTo(order.getPrice()) >= 0)
+                    .min(Comparator.comparing(Order::getPrice))
+                    .orElse(null);
+        else
+            return orderBook.stream()
+                    .filter(order -> order.getStock().equals(stock)
+                            && price.compareTo(order.getPrice()) <= 0)
+                    .max(Comparator.comparing(Order::getPrice))
+                    .orElse(null);
     }
 
     //method to decrease quantity of opposite order in order book
@@ -96,6 +89,7 @@ class MyEngine implements MatchingEngine {
         //order is referenced to best matching order, which was filtered out of list, so this works
         order.decrease(quantity);
 
+        //if order's quantity in order book is 0, it is removed from the book
         if(order.getQuantity().compareTo(BigDecimal.ZERO) == 0)
             orderBook.remove(order);
     }
